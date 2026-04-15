@@ -4,6 +4,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.domain.rules.models import EvaluationStatus
+from app.domain.trade_specs.config import DEFAULT_TRADE_VALIDATION_CONFIG
 
 
 class SetupType(str, Enum):
@@ -21,9 +22,11 @@ class TradeSpecInput(BaseModel):
     entry_zone_max: float = Field(..., gt=0)
     stop_loss: float = Field(..., gt=0)
     target_price: float = Field(..., gt=0)
-    # TODO: Input currently allows 1..90 days while validation logic prefers 3..30.
-    # Unify these constraints when the real trade-builder rules are finalized.
-    time_horizon_days: int = Field(..., ge=1, le=90)
+    time_horizon_days: int = Field(
+        ...,
+        ge=DEFAULT_TRADE_VALIDATION_CONFIG.accepted_time_horizon_min_days,
+        le=DEFAULT_TRADE_VALIDATION_CONFIG.accepted_time_horizon_max_days,
+    )
     thesis: str = Field(..., min_length=5, max_length=500)
     ticker_status: EvaluationStatus = EvaluationStatus.WAIT
 
@@ -50,9 +53,15 @@ class TradeSpec(TradeSpecInput):
     created_at: datetime
 
 
+class ValidationSeverity(str, Enum):
+    HARD = "hard"
+    SOFT = "soft"
+
+
 class TradeValidationCheck(BaseModel):
     name: str
     passed: bool
+    severity: ValidationSeverity = ValidationSeverity.HARD
     message: str
 
 

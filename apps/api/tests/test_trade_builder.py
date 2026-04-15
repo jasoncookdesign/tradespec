@@ -35,14 +35,12 @@ def test_validation_rules_block_weak_risk_reward() -> None:
     result = validate_trade(_make_payload(target_price=106.0))
 
     assert result.approved is False
-    assert any("risk/reward" in warning.lower() for warning in result.warnings)
+    assert any("risk/reward" in reason.lower() for reason in result.reasons)
 
 
-def test_validation_rules_enforce_time_horizon_window() -> None:
-    result = validate_trade(_make_payload(time_horizon_days=45))
-
-    assert result.approved is False
-    assert any(check.name == "time_horizon" and check.passed is False for check in result.checks)
+def test_time_horizon_input_is_limited_to_swing_window() -> None:
+    with pytest.raises(ValidationError):
+        _make_payload(time_horizon_days=45)
 
 
 def test_wait_ticker_status_keeps_plan_visible_but_not_approved() -> None:
@@ -58,6 +56,35 @@ def test_invalid_ticker_status_blocks_builder() -> None:
     assert result.status == EvaluationStatus.INVALID
     assert result.approved is False
     assert any("ticker evaluation" in reason.lower() for reason in result.reasons)
+
+
+def test_risk_reward_tiers_raise_score_meaningfully() -> None:
+    weak = validate_trade(_make_payload(target_price=114.0))
+    good = validate_trade(_make_payload(target_price=119.0))
+    strong = validate_trade(_make_payload(target_price=125.0))
+
+    assert weak.approved is True
+    assert good.approved is True
+    assert strong.approved is True
+    assert weak.score < good.score < strong.score
+
+
+def test_hard_failures_override_other_positive_signals() -> None:
+    result = validate_trade(
+        _make_payload(
+            ticker_status=EvaluationStatus.WAIT,
+            target_price=125.0,
+            time_horizon_days=10,
+        )
+    )
+
+    assert result.approved is False
+    assert result.status == EvaluationStatus.WAIT
+    assert any(
+        check.name == "evaluation_status" and check.passed is False
+        for check in result.checks
+    )
+    assert any("must be valid" in reason.lower() for reason in result.reasons)
 
 
 def test_persistence_happy_path(tmp_path: Path) -> None:

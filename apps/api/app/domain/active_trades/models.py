@@ -5,11 +5,10 @@ from pydantic import BaseModel, Field
 
 
 class GuidanceStatus(str, Enum):
-    # TODO: These active-trade guidance states are provisional and will likely be
-    # refined when the stabilizer logic is expanded in Step 6.
-    ON_PLAN = "ON_PLAN"
-    CAUTION = "CAUTION"
-    REVIEW_EXIT = "REVIEW_EXIT"
+    HOLD = "HOLD"
+    EXIT = "EXIT"
+    EXPIRED = "EXPIRED"
+    NORMAL = "NORMAL"
 
 
 class ActiveTrade(BaseModel):
@@ -25,5 +24,6 @@ class ActiveTrade(BaseModel):
     expected_drawdown_max_percent: float
     expected_time_to_move_min_days: int = Field(..., ge=1)
     expected_time_to_move_max_days: int = Field(..., ge=1)
+    elapsed_days: int = Field(..., ge=0)
     guidance_status: GuidanceStatus
     guidance_message: str

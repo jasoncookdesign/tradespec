@@ -68,6 +68,10 @@ a {
   gap: 16px;
 }
 
+.twoColGrid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
 .card {
   background: rgba(17, 24, 39, 0.95);
   border: 1px solid var(--border);
@@ -145,6 +149,12 @@ button {
 
 .notice {
   color: #fbbf24;
+  margin: 0;
+}
+
+.guidanceMessage {
+  border-left: 4px solid var(--accent);
+  padding-left: 12px;
   margin: 0;
 }
 

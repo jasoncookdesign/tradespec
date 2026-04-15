@@ -53,7 +53,7 @@ export interface TradeValidationResult {
   warnings: string[];
 }
 
-export type GuidanceStatus = 'ON_PLAN' | 'CAUTION' | 'REVIEW_EXIT';
+export type GuidanceStatus = 'HOLD' | 'EXIT' | 'EXPIRED' | 'NORMAL';
 
 export interface ActiveTrade {
   id: string;
@@ -68,6 +68,7 @@ export interface ActiveTrade {
   expected_drawdown_max_percent: number;
   expected_time_to_move_min_days: number;
   expected_time_to_move_max_days: number;
+  elapsed_days: number;
   guidance_status: GuidanceStatus;
   guidance_message: string;
 }
