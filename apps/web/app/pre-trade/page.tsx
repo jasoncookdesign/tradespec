@@ -5,22 +5,20 @@ import { useState } from 'react';
 import { evaluateTicker, validateTrade } from '../../lib/api';
 import { TickerEvaluation, TradeValidationResult } from '../../lib/types';
 
-const sampleTrade = {
-  ticker: 'MSFT',
-  setup_type: 'breakout' as const,
-  entry_zone_min: 100,
-  entry_zone_max: 102,
-  stop_loss: 96,
-  target_price: 112,
-  time_horizon_days: 10,
-  thesis: 'Continuation after a clean breakout with defined risk.',
-};
-
 export default function PreTradePage() {
   const [ticker, setTicker] = useState('MSFT');
   const [evaluation, setEvaluation] = useState<TickerEvaluation | null>(null);
   const [validation, setValidation] = useState<TradeValidationResult | null>(null);
   const [error, setError] = useState('');
+  const [tradeForm, setTradeForm] = useState({
+    setup_type: 'trend_pullback',
+    entry_zone_min: '100',
+    entry_zone_max: '102',
+    stop_loss: '95',
+    target_price: '114',
+    time_horizon_days: '10',
+    thesis: 'Trend pullback into support with defined risk.',
+  });
 
   async function handleEvaluateTicker() {
     setError('');
@@ -28,6 +26,11 @@ export default function PreTradePage() {
     try {
       const result = await evaluateTicker(ticker);
       setEvaluation(result);
+      setTradeForm((current) => ({
+        ...current,
+        entry_zone_min: String(result.suggested_entry_zone.min_price),
+        entry_zone_max: String(result.suggested_entry_zone.max_price),
+      }));
     } catch {
       setError('Start the API on localhost:8000 to load the evaluation preview.');
     }
@@ -38,8 +41,15 @@ export default function PreTradePage() {
 
     try {
       const result = await validateTrade({
-        ...sampleTrade,
-        ticker: ticker.trim().toUpperCase() || sampleTrade.ticker,
+        ticker: ticker.trim().toUpperCase() || 'MSFT',
+        setup_type: tradeForm.setup_type as 'trend_pullback',
+        entry_zone_min: Number(tradeForm.entry_zone_min),
+        entry_zone_max: Number(tradeForm.entry_zone_max),
+        stop_loss: Number(tradeForm.stop_loss),
+        target_price: Number(tradeForm.target_price),
+        time_horizon_days: Number(tradeForm.time_horizon_days),
+        thesis: tradeForm.thesis,
+        ticker_status: evaluation?.status ?? 'WAIT',
       });
       setValidation(result);
     } catch {
@@ -47,14 +57,16 @@ export default function PreTradePage() {
     }
   }
 
+  const builderDisabled = evaluation?.status === 'INVALID';
+
   return (
     <section className="stack-lg">
       <div className="card stack-md">
         <p className="eyebrow">Primary module</p>
         <h2>Pre-Trade Evaluation</h2>
         <p>
-          Use the typed API contracts to preview both ticker evaluation and trade
-          validation responses.
+          Evaluate the ticker first, then build a plan with entry zone, stop, target, and
+          time horizon.
         </p>
 
         <div className="formRow">
@@ -65,9 +77,6 @@ export default function PreTradePage() {
           <div className="buttonRow">
             <button type="button" onClick={handleEvaluateTicker}>
               Evaluate ticker
-            </button>
-            <button className="secondaryButton" type="button" onClick={handleValidateTrade}>
-              Validate sample trade
             </button>
           </div>
         </div>
@@ -102,6 +111,93 @@ export default function PreTradePage() {
         </div>
       ) : null}
 
+      <div className="card stack-md">
+        <h3>Trade Builder</h3>
+        <p>
+          {evaluation?.status === 'INVALID'
+            ? 'Ticker is INVALID, so trade entry is blocked.'
+            : evaluation?.status === 'WAIT'
+              ? 'Ticker is WAIT, so you can plan the trade but should not enter yet.'
+              : 'Ticker is VALID, so the plan can be evaluated normally.'}
+        </p>
+
+        <div className="grid twoColGrid">
+          <label className="field">
+            <span>Setup type</span>
+            <select
+              value={tradeForm.setup_type}
+              onChange={(event) =>
+                setTradeForm((current) => ({ ...current, setup_type: event.target.value }))
+              }
+            >
+              <option value="trend_pullback">trend_pullback</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Time horizon days</span>
+            <input
+              value={tradeForm.time_horizon_days}
+              onChange={(event) =>
+                setTradeForm((current) => ({ ...current, time_horizon_days: event.target.value }))
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Entry zone min</span>
+            <input
+              value={tradeForm.entry_zone_min}
+              onChange={(event) =>
+                setTradeForm((current) => ({ ...current, entry_zone_min: event.target.value }))
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Entry zone max</span>
+            <input
+              value={tradeForm.entry_zone_max}
+              onChange={(event) =>
+                setTradeForm((current) => ({ ...current, entry_zone_max: event.target.value }))
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Stop loss</span>
+            <input
+              value={tradeForm.stop_loss}
+              onChange={(event) =>
+                setTradeForm((current) => ({ ...current, stop_loss: event.target.value }))
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Target price</span>
+            <input
+              value={tradeForm.target_price}
+              onChange={(event) =>
+                setTradeForm((current) => ({ ...current, target_price: event.target.value }))
+              }
+            />
+          </label>
+        </div>
+
+        <label className="field">
+          <span>Thesis</span>
+          <textarea
+            rows={3}
+            value={tradeForm.thesis}
+            onChange={(event) =>
+              setTradeForm((current) => ({ ...current, thesis: event.target.value }))
+            }
+          />
+        </label>
+
+        <div className="buttonRow">
+          <button type="button" onClick={handleValidateTrade} disabled={builderDisabled}>
+            Validate trade plan
+          </button>
+        </div>
+      </div>
+
       {validation ? (
         <div className="card stack-md">
           <h3>Trade validation result</h3>
@@ -111,6 +207,10 @@ export default function PreTradePage() {
           <p>
             <strong>Score:</strong> {validation.score}
           </p>
+          <p>
+            <strong>Status:</strong>{' '}
+            <span className={`statusBadge status-${validation.status}`}>{validation.status}</span>
+          </p>
           <ul className="vocabulary">
             {validation.checks.map((check) => (
               <li key={check.name}>
@@ -118,6 +218,26 @@ export default function PreTradePage() {
               </li>
             ))}
           </ul>
+          {validation.reasons.length > 0 ? (
+            <div>
+              <strong>Reasons</strong>
+              <ul className="vocabulary">
+                {validation.reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {validation.warnings.length > 0 ? (
+            <div>
+              <strong>Warnings</strong>
+              <ul className="vocabulary">
+                {validation.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

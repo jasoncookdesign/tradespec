@@ -11,6 +11,7 @@ class SetupType(str, Enum):
     PULLBACK = "pullback"
     REVERSAL = "reversal"
     TREND_CONTINUATION = "trend-continuation"
+    TREND_PULLBACK = "trend_pullback"
 
 
 class TradeSpecInput(BaseModel):
@@ -24,6 +25,7 @@ class TradeSpecInput(BaseModel):
     # Unify these constraints when the real trade-builder rules are finalized.
     time_horizon_days: int = Field(..., ge=1, le=90)
     thesis: str = Field(..., min_length=5, max_length=500)
+    ticker_status: EvaluationStatus = EvaluationStatus.WAIT
 
     @field_validator("ticker")
     @classmethod

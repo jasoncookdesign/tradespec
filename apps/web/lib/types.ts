@@ -1,6 +1,11 @@
 export type EvaluationStatus = 'VALID' | 'WAIT' | 'INVALID';
 export type AssetType = 'stock' | 'etf' | 'unknown';
-export type SetupType = 'breakout' | 'pullback' | 'reversal' | 'trend-continuation';
+export type SetupType =
+  | 'breakout'
+  | 'pullback'
+  | 'reversal'
+  | 'trend-continuation'
+  | 'trend_pullback';
 
 export interface PriceZone {
   min_price: number;
@@ -30,6 +35,7 @@ export interface TradeSpecInput {
   target_price: number;
   time_horizon_days: number;
   thesis: string;
+  ticker_status: EvaluationStatus;
 }
 
 export interface TradeValidationCheck {
