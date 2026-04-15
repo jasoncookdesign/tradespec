@@ -9,6 +9,7 @@ from app.domain.rules.models import EvaluationStatus
 class AssetType(str, Enum):
     STOCK = "stock"
     ETF = "etf"
+    UNKNOWN = "unknown"
 
 
 class PriceZone(BaseModel):

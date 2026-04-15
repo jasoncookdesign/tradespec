@@ -29,7 +29,7 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
 export function evaluateTicker(ticker: string): Promise<TickerEvaluation> {
   return apiRequest<TickerEvaluation>('/evaluate-ticker', {
     method: 'POST',
-    body: JSON.stringify({ ticker, asset_type: 'stock' }),
+    body: JSON.stringify({ ticker }),
   });
 }
 

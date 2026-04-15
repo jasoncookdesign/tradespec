@@ -1,5 +1,5 @@
 export type EvaluationStatus = 'VALID' | 'WAIT' | 'INVALID';
-export type AssetType = 'stock' | 'etf';
+export type AssetType = 'stock' | 'etf' | 'unknown';
 export type SetupType = 'breakout' | 'pullback' | 'reversal' | 'trend-continuation';
 
 export interface PriceZone {

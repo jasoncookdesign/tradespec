@@ -79,9 +79,21 @@ export default function PreTradePage() {
         <div className="card stack-md">
           <h3>Evaluation result</h3>
           <p>
-            <strong>Status:</strong> {evaluation.status}
+            <strong>Status:</strong>{' '}
+            <span className={`statusBadge status-${evaluation.status}`}>{evaluation.status}</span>
           </p>
           <p>{evaluation.trend_summary}</p>
+          <p>{evaluation.momentum_summary}</p>
+          <p>{evaluation.structure_summary}</p>
+          <p>{evaluation.volatility_summary}</p>
+          <p>
+            <strong>Suggested entry zone:</strong> {evaluation.suggested_entry_zone.min_price} -{' '}
+            {evaluation.suggested_entry_zone.max_price}
+          </p>
+          <p>
+            <strong>Support zone:</strong> {evaluation.suggested_support_zone.min_price} -{' '}
+            {evaluation.suggested_support_zone.max_price}
+          </p>
           <ul className="vocabulary">
             {evaluation.reasons.map((reason) => (
               <li key={reason}>{reason}</li>

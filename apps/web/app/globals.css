@@ -148,6 +148,29 @@ button {
   margin: 0;
 }
 
+.statusBadge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.status-VALID {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.status-WAIT {
+  background: rgba(251, 191, 36, 0.18);
+  color: #fde68a;
+}
+
+.status-INVALID {
+  background: rgba(248, 113, 113, 0.18);
+  color: #fca5a5;
+}
+
 @media (max-width: 720px) {
   .header {
     flex-direction: column;
