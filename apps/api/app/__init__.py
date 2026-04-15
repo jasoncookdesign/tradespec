@@ -1,0 +1,1 @@
+"""TradeSpec API application package."""

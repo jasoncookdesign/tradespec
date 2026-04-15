@@ -1,0 +1,24 @@
+# Ignore architect prompt markdown files
+architect_prompts/*.md
+
+# macOS
+.DS_Store
+__MACOSX/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+coverage/
+
+# Environment files
+.env
+.env.local
