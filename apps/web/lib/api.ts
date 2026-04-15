@@ -44,6 +44,10 @@ export function getActiveTrades(): Promise<ActiveTrade[]> {
   return apiRequest<ActiveTrade[]>('/active-trades');
 }
 
+export function getJournalEntries(): Promise<JournalEntry[]> {
+  return apiRequest<JournalEntry[]>('/journal-entries');
+}
+
 export function createJournalEntry(payload: JournalEntryCreate): Promise<JournalEntry> {
   return apiRequest<JournalEntry>('/journal-entry', {
     method: 'POST',

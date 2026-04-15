@@ -11,6 +11,11 @@ router = APIRouter(tags=["journal"])
 service = JournalService()
 
 
+@router.get('/journal-entries', response_model=list[JournalEntry])
+def list_journal_entries_route() -> list[JournalEntry]:
+    return service.list_entries()
+
+
 @router.post("/journal-entry", response_model=JournalEntry)
 def create_journal_entry_route(
     payload: JournalEntryCreate,

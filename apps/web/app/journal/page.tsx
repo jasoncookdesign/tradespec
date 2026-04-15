@@ -1,15 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { createJournalEntry } from '../../lib/api';
+import { createJournalEntry, getJournalEntries } from '../../lib/api';
 import { JournalEntry } from '../../lib/types';
 
 export default function JournalPage() {
   const [outcome, setOutcome] = useState('Closed into planned strength.');
   const [lesson, setLesson] = useState('Following the plan reduced emotional decision-making.');
-  const [entry, setEntry] = useState<JournalEntry | null>(null);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    getJournalEntries()
+      .then(setEntries)
+      .catch(() => {
+        setError('Start the API on localhost:8000 to load journal entries.');
+      });
+  }, []);
 
   async function handleCreateEntry() {
     setError('');
@@ -21,7 +29,7 @@ export default function JournalPage() {
         outcome_summary: outcome,
         lesson_summary: lesson,
       });
-      setEntry(result);
+      setEntries((current) => [result, ...current]);
     } catch {
       setError('Start the API on localhost:8000 to create a journal preview.');
     }
@@ -33,8 +41,8 @@ export default function JournalPage() {
         <p className="eyebrow">Tertiary module</p>
         <h2>Trade Journal</h2>
         <p>
-          This screen posts a journal draft through the new typed API contract and shows
-          the advisory observation.
+          Record the outcome, note the lesson, and review the AI observation as
+          advisory-only guidance.
         </p>
 
         <label className="field">
@@ -49,22 +57,28 @@ export default function JournalPage() {
 
         <div className="buttonRow">
           <button type="button" onClick={handleCreateEntry}>
-            Save journal preview
+            Save journal entry
           </button>
         </div>
 
         {error ? <p className="notice">{error}</p> : null}
       </div>
 
-      {entry ? (
-        <div className="card stack-md">
-          <h3>Journal result</h3>
-          <p>{entry.outcome_summary}</p>
-          <p>
-            <strong>AI observation:</strong> {entry.ai_observation}
-          </p>
-        </div>
-      ) : null}
+      <div className="card stack-md">
+        <h3>Journal history</h3>
+        {entries.length === 0 ? <p>No journal entries yet.</p> : null}
+        {entries.map((entry) => (
+          <div className="stack-sm" key={entry.id}>
+            <p>
+              <strong>{entry.trade_spec_id}</strong> — {entry.outcome_summary}
+            </p>
+            <p>{entry.lesson_summary}</p>
+            <p className="advisoryCallout">
+              <strong>AI advisory:</strong> {entry.ai_observation}
+            </p>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

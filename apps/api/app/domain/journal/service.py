@@ -1,13 +1,20 @@
+from pathlib import Path
+
 from app.domain.ai_services.service import AIService
 from app.domain.journal.models import JournalEntry, JournalEntryCreate
+from app.domain.journal.repository import SQLiteJournalRepository
 
 
 class JournalService:
+    def __init__(self, repository: SQLiteJournalRepository | None = None):
+        self._repository = repository or SQLiteJournalRepository(Path('tradespec.db'))
+
     def create_entry(self, payload: JournalEntryCreate, ai_service: AIService) -> JournalEntry:
-        observation = ai_service.critique_trade_note(
-            f"Outcome: {payload.outcome_summary} Lesson: {payload.lesson_summary}"
+        observation = ai_service.generate_post_trade_observation(
+            payload.outcome_summary,
+            payload.lesson_summary,
         )
-        return JournalEntry(
+        entry = JournalEntry(
             trade_spec_id=payload.trade_spec_id,
             exit_price=payload.exit_price,
             exited_at=payload.exited_at,
@@ -15,3 +22,7 @@ class JournalService:
             lesson_summary=payload.lesson_summary,
             ai_observation=observation,
         )
+        return self._repository.save(entry)
+
+    def list_entries(self) -> list[JournalEntry]:
+        return self._repository.list_entries()
