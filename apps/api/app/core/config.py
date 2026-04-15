@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     allowed_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
     sqlite_url: str = "sqlite:///./tradespec.db"
     market_data_provider: Literal["yahoo-finance"] = "yahoo-finance"
+    market_data_cache_ttl_seconds: int = 300
     ai_provider: Literal["stub"] = "stub"
 
     model_config = SettingsConfigDict(
