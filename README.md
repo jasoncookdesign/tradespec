@@ -14,6 +14,12 @@ This MVP is intentionally opinionated:
 - deterministic rules remain authoritative
 - AI is advisory only
 
+## AI scope today
+
+The current UI only integrates the post-trade AI observation inside the journal flow.
+The pre-trade summary and critique seams exist in the backend service interface, but
+they are intentionally not yet wired into the user-facing workflow.
+
 ## Monorepo layout
 
 ```text
@@ -26,7 +32,7 @@ apps/
 
 - Frontend: Next.js + TypeScript
 - Backend: FastAPI + Python
-- Storage: SQLite (planned in later steps)
+- Storage: SQLite for local trade and journal persistence
 - Market data: Yahoo Finance adapter seam
 - AI: stubbed service interface for now
 
@@ -39,7 +45,7 @@ Create `apps/api/.env` from `apps/api/.env.example`.
 - `TRADESPEC_APP_NAME` — API application name
 - `TRADESPEC_ENVIRONMENT` — `development`, `test`, or `production`
 - `TRADESPEC_ALLOWED_ORIGINS` — comma-separated frontend origins
-- `TRADESPEC_SQLITE_URL` — SQLite connection string for later persistence
+- `TRADESPEC_SQLITE_URL` — SQLite connection string for local trade and journal persistence
 - `TRADESPEC_MARKET_DATA_PROVIDER` — defaults to `yahoo-finance`
 - `TRADESPEC_AI_PROVIDER` — defaults to `stub`
 
@@ -69,6 +75,13 @@ curl http://localhost:8000/api/health
 
 ```bash
 cd apps/web
+npm install
+npm run dev
+```
+
+You can also run the frontend from the repo root:
+
+```bash
 npm install
 npm run dev
 ```
@@ -117,6 +130,15 @@ The MVP uses these core concepts:
 6. Journal and AI seams
 7. Polish and hardening
 
+## Known limitations
+
+- localhost-focused, single-user workflow
+- no authentication or broker integration
+- journal and trade persistence use local SQLite only
+- AI output is advisory and currently limited to the post-trade journal flow
+- market data depends on the Yahoo Finance adapter seam
+
 ## Current status
 
-The repo is scaffolded and ready for the next implementation slices.
+The repo is now a locally usable MVP with deterministic evaluation, validation,
+active-trade guidance, and journaling flows.

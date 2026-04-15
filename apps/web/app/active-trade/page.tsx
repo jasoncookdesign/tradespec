@@ -23,8 +23,8 @@ export default function ActiveTradePage() {
         <p className="eyebrow">Secondary module</p>
         <h2>Active Trade Stabilizer</h2>
         <p>
-          Review whether the trade is still behaving normally, has invalidated, or has
-          simply run out of time.
+          Review whether the trade is still behaving normally, needs a disciplined
+          hold, has invalidated, or has simply run out of time.
         </p>
         {error ? <p className="notice">{error}</p> : null}
       </div>
@@ -34,6 +34,10 @@ export default function ActiveTradePage() {
           <h3>{trade.trade_spec_id}</h3>
           <p className="guidanceMessage">
             <strong>{trade.guidance_status}:</strong> {trade.guidance_message}
+          </p>
+          <p>
+            NORMAL means price action is inside the expected envelope. HOLD means the
+            setup is still intact but using more room than ideal.
           </p>
           <div className="grid twoColGrid">
             <p>

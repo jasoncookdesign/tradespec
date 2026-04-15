@@ -64,5 +64,13 @@ def test_guidance_message_generation_for_normal_behavior() -> None:
     service = ActiveTradeStabilizerService()
     trade = service.build_active_trade(_make_trade(current_price=101.5))
 
-    assert trade.guidance_status in {GuidanceStatus.HOLD, GuidanceStatus.NORMAL}
-    assert len(trade.guidance_message) > 10
+    assert trade.guidance_status == GuidanceStatus.NORMAL
+    assert 'expected behavior envelope' in trade.guidance_message.lower()
+
+
+def test_deeper_pullback_above_stop_returns_hold_guidance() -> None:
+    service = ActiveTradeStabilizerService()
+    trade = service.build_active_trade(_make_trade(current_price=97.5))
+
+    assert trade.guidance_status == GuidanceStatus.HOLD
+    assert 'thesis remains intact' in trade.guidance_message.lower()

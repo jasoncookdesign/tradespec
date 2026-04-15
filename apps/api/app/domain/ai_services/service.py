@@ -2,6 +2,13 @@ from typing import Protocol
 
 
 class AIService(Protocol):
+    """Advisory seam only.
+
+    The journal flow currently uses the post-trade observation method.
+    Pre-trade summary and critique seams exist for later UI wiring, but they are not
+    yet part of the user-facing workflow.
+    """
+
     def summarize_pre_trade(self, setup_context: str) -> str:
         """Return an advisory-only pre-trade summary."""
 

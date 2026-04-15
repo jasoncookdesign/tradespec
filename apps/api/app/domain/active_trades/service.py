@@ -44,7 +44,11 @@ def derive_expected_behavior_envelope(
         expected_drawdown_max_percent=config.default_expected_drawdown_max_percent,
         expected_time_to_move_min_days=expected_time_to_move_min_days,
         expected_time_to_move_max_days=expected_time_to_move_max_days,
-        note="Expected behavior is based on a simple swing-trade envelope for the MVP.",
+        note=(
+            "Expected behavior is based on a simple swing-trade envelope, where "
+            "NORMAL means the pullback is still ordinary and HOLD means the trade "
+            "is intact but using more room than ideal."
+        ),
     )
 
 
@@ -80,13 +84,16 @@ class ActiveTradeStabilizerService:
                 "The trade has exceeded its time horizon without enough progress."
             )
         elif pnl_percent >= envelope.expected_drawdown_max_percent:
-            guidance_status = GuidanceStatus.HOLD
+            guidance_status = GuidanceStatus.NORMAL
             guidance_message = (
-                "The trade is behaving normally and remains within its expected envelope."
+                "Price action remains inside the expected behavior envelope."
             )
         else:
-            guidance_status = GuidanceStatus.NORMAL
-            guidance_message = "Price action is still acceptable, but monitor the thesis closely."
+            guidance_status = GuidanceStatus.HOLD
+            guidance_message = (
+                "The trade is still above invalidation, but the pullback is deeper "
+                "than ideal. Hold only if the thesis remains intact."
+            )
 
         return ActiveTrade(
             id=f"active-{trade.ticker.lower()}-001",

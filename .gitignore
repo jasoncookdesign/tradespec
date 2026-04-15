@@ -1,6 +1,3 @@
-# Ignore architect prompt markdown files
-architect_prompts/*.md
-
 # macOS
 .DS_Store
 __MACOSX/

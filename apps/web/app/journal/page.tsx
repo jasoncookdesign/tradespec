@@ -6,6 +6,8 @@ import { createJournalEntry, getJournalEntries } from '../../lib/api';
 import { JournalEntry } from '../../lib/types';
 
 export default function JournalPage() {
+  const [tradeSpecId, setTradeSpecId] = useState('trade-msft-001');
+  const [exitPrice, setExitPrice] = useState('111.5');
   const [outcome, setOutcome] = useState('Closed into planned strength.');
   const [lesson, setLesson] = useState('Following the plan reduced emotional decision-making.');
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -22,10 +24,16 @@ export default function JournalPage() {
   async function handleCreateEntry() {
     setError('');
 
+    const parsedExitPrice = Number.parseFloat(exitPrice);
+    if (!tradeSpecId.trim() || Number.isNaN(parsedExitPrice) || parsedExitPrice <= 0) {
+      setError('Enter a trade ID and a valid positive exit price.');
+      return;
+    }
+
     try {
       const result = await createJournalEntry({
-        trade_spec_id: 'trade-msft-001',
-        exit_price: 111.5,
+        trade_spec_id: tradeSpecId.trim(),
+        exit_price: parsedExitPrice,
         outcome_summary: outcome,
         lesson_summary: lesson,
       });
@@ -44,6 +52,22 @@ export default function JournalPage() {
           Record the outcome, note the lesson, and review the AI observation as
           advisory-only guidance.
         </p>
+
+        <label className="field">
+          <span>Trade spec ID</span>
+          <input value={tradeSpecId} onChange={(event) => setTradeSpecId(event.target.value)} />
+        </label>
+
+        <label className="field">
+          <span>Exit price</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={exitPrice}
+            onChange={(event) => setExitPrice(event.target.value)}
+          />
+        </label>
 
         <label className="field">
           <span>Outcome summary</span>

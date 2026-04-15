@@ -1,13 +1,11 @@
-from pathlib import Path
-
 from app.domain.ai_services.service import AIService
 from app.domain.journal.models import JournalEntry, JournalEntryCreate
 from app.domain.journal.repository import SQLiteJournalRepository
 
 
 class JournalService:
-    def __init__(self, repository: SQLiteJournalRepository | None = None):
-        self._repository = repository or SQLiteJournalRepository(Path('tradespec.db'))
+    def __init__(self, repository: SQLiteJournalRepository):
+        self._repository = repository
 
     def create_entry(self, payload: JournalEntryCreate, ai_service: AIService) -> JournalEntry:
         observation = ai_service.generate_post_trade_observation(
