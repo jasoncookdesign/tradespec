@@ -9,8 +9,8 @@ from app.domain.active_trades.models import ActiveTrade, GuidanceStatus
 
 @dataclass(slots=True)
 class ExpectedBehaviorEnvelope:
-    expected_drawdown_min_percent: float
-    expected_drawdown_max_percent: float
+    normal_pullback_min_pct: float
+    normal_pullback_max_pct: float
     expected_time_to_move_min_days: int
     expected_time_to_move_max_days: int
     note: str
@@ -31,6 +31,8 @@ def derive_expected_behavior_envelope(
     trade: ActiveTradeInput,
     config: ActiveTradeConfig = DEFAULT_ACTIVE_TRADE_CONFIG,
 ) -> ExpectedBehaviorEnvelope:
+    # Current pullback thresholds are static for MVP clarity.
+    # A future refinement could scale them using volatility-aware sizing.
     expected_time_to_move_min_days = max(
         1,
         round(trade.time_horizon_days * config.expected_time_to_move_min_days_ratio),
@@ -40,14 +42,13 @@ def derive_expected_behavior_envelope(
         round(trade.time_horizon_days * config.expected_time_to_move_max_days_ratio),
     )
     return ExpectedBehaviorEnvelope(
-        expected_drawdown_min_percent=config.default_expected_drawdown_min_percent,
-        expected_drawdown_max_percent=config.default_expected_drawdown_max_percent,
+        normal_pullback_min_pct=config.default_expected_drawdown_min_percent,
+        normal_pullback_max_pct=config.default_expected_drawdown_max_percent,
         expected_time_to_move_min_days=expected_time_to_move_min_days,
         expected_time_to_move_max_days=expected_time_to_move_max_days,
         note=(
-            "Expected behavior is based on a simple swing-trade envelope, where "
-            "NORMAL means the pullback is still ordinary and HOLD means the trade "
-            "is intact but using more room than ideal."
+            "This envelope estimates the normal pullback range and time window for "
+            "a simple bullish swing setup."
         ),
     )
 
@@ -72,28 +73,29 @@ class ActiveTradeStabilizerService:
             2,
         )
 
+        thesis_intact = (
+            trade.current_price > trade.stop_loss
+            and elapsed_days <= trade.time_horizon_days
+            and pnl_percent >= envelope.normal_pullback_min_pct
+        )
+
         if trade.current_price <= trade.stop_loss:
             guidance_status = GuidanceStatus.EXIT
-            guidance_message = "Stop loss has been reached. Exit and protect capital."
+            guidance_message = 'Stop level breached. Exit immediately.'
         elif (
             elapsed_days > trade.time_horizon_days
             and pnl_percent < self._config.minimum_progress_pct_before_expiry
         ):
             guidance_status = GuidanceStatus.EXPIRED
             guidance_message = (
-                "The trade has exceeded its time horizon without enough progress."
+                'Trade has not progressed within planned time. Exit and redeploy capital.'
             )
-        elif pnl_percent >= envelope.expected_drawdown_max_percent:
-            guidance_status = GuidanceStatus.NORMAL
-            guidance_message = (
-                "Price action remains inside the expected behavior envelope."
-            )
-        else:
+        elif thesis_intact:
             guidance_status = GuidanceStatus.HOLD
-            guidance_message = (
-                "The trade is still above invalidation, but the pullback is deeper "
-                "than ideal. Hold only if the thesis remains intact."
-            )
+            guidance_message = 'Pullback remains within expected range. Do not exit.'
+        else:
+            guidance_status = GuidanceStatus.EXIT
+            guidance_message = 'Price behavior is outside the normal pullback range. Exit.'
 
         return ActiveTrade(
             id=f"active-{trade.ticker.lower()}-001",
@@ -104,11 +106,12 @@ class ActiveTradeStabilizerService:
             pnl_percent=pnl_percent,
             distance_to_stop_percent=distance_to_stop_percent,
             distance_to_target_percent=distance_to_target_percent,
-            expected_drawdown_min_percent=envelope.expected_drawdown_min_percent,
-            expected_drawdown_max_percent=envelope.expected_drawdown_max_percent,
+            normal_pullback_min_pct=envelope.normal_pullback_min_pct,
+            normal_pullback_max_pct=envelope.normal_pullback_max_pct,
             expected_time_to_move_min_days=envelope.expected_time_to_move_min_days,
             expected_time_to_move_max_days=envelope.expected_time_to_move_max_days,
             elapsed_days=elapsed_days,
+            thesis_intact=thesis_intact,
             guidance_status=guidance_status,
             guidance_message=guidance_message,
         )

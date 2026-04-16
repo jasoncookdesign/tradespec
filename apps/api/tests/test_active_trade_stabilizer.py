@@ -26,7 +26,7 @@ def _make_trade(**overrides) -> ActiveTradeInput:
 def test_envelope_generation_is_deterministic() -> None:
     envelope = derive_expected_behavior_envelope(_make_trade())
 
-    assert envelope.expected_drawdown_min_percent <= envelope.expected_drawdown_max_percent
+    assert envelope.normal_pullback_min_pct <= envelope.normal_pullback_max_pct
     assert envelope.expected_time_to_move_min_days >= 1
     assert envelope.expected_time_to_move_max_days >= envelope.expected_time_to_move_min_days
 
@@ -45,6 +45,8 @@ def test_stop_hit_logic_returns_exit_guidance() -> None:
     trade = service.build_active_trade(_make_trade(current_price=94.5))
 
     assert trade.guidance_status == GuidanceStatus.EXIT
+    assert trade.thesis_intact is False
+    assert 'exit immediately' in trade.guidance_message.lower()
 
 
 def test_time_expiry_logic_returns_expired_guidance() -> None:
@@ -58,19 +60,22 @@ def test_time_expiry_logic_returns_expired_guidance() -> None:
     )
 
     assert trade.guidance_status == GuidanceStatus.EXPIRED
+    assert trade.thesis_intact is False
+    assert 'redeploy capital' in trade.guidance_message.lower()
 
 
-def test_guidance_message_generation_for_normal_behavior() -> None:
+def test_hold_case_returns_clear_hold_guidance() -> None:
     service = ActiveTradeStabilizerService()
     trade = service.build_active_trade(_make_trade(current_price=101.5))
 
-    assert trade.guidance_status == GuidanceStatus.NORMAL
-    assert 'expected behavior envelope' in trade.guidance_message.lower()
-
-
-def test_deeper_pullback_above_stop_returns_hold_guidance() -> None:
-    service = ActiveTradeStabilizerService()
-    trade = service.build_active_trade(_make_trade(current_price=97.5))
-
     assert trade.guidance_status == GuidanceStatus.HOLD
-    assert 'thesis remains intact' in trade.guidance_message.lower()
+    assert trade.thesis_intact is True
+    assert 'do not exit' in trade.guidance_message.lower()
+
+
+def test_pullback_beyond_normal_range_returns_exit_guidance() -> None:
+    service = ActiveTradeStabilizerService()
+    trade = service.build_active_trade(_make_trade(current_price=94.0))
+
+    assert trade.guidance_status == GuidanceStatus.EXIT
+    assert 'exit' in trade.guidance_message.lower()

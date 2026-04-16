@@ -23,8 +23,8 @@ export default function ActiveTradePage() {
         <p className="eyebrow">Secondary module</p>
         <h2>Active Trade Stabilizer</h2>
         <p>
-          Review whether the trade is still behaving normally, needs a disciplined
-          hold, has invalidated, or has simply run out of time.
+          Review the one primary action for the trade: hold, exit, or free the capital
+          because the setup has expired.
         </p>
         {error ? <p className="notice">{error}</p> : null}
       </div>
@@ -35,13 +35,12 @@ export default function ActiveTradePage() {
           <p className="guidanceMessage">
             <strong>{trade.guidance_status}:</strong> {trade.guidance_message}
           </p>
-          <p>
-            NORMAL means price action is inside the expected envelope. HOLD means the
-            setup is still intact but using more room than ideal.
-          </p>
           <div className="grid twoColGrid">
             <p>
               <strong>P&amp;L:</strong> {trade.pnl_percent}%
+            </p>
+            <p>
+              <strong>Thesis intact:</strong> {trade.thesis_intact ? 'Yes' : 'No'}
             </p>
             <p>
               <strong>Elapsed days:</strong> {trade.elapsed_days}
@@ -57,8 +56,8 @@ export default function ActiveTradePage() {
             <strong>Expected behavior envelope</strong>
             <ul className="vocabulary">
               <li>
-                Expected drawdown: {trade.expected_drawdown_min_percent}% to{' '}
-                {trade.expected_drawdown_max_percent}%
+                Normal pullback range: {trade.normal_pullback_min_pct}% to{' '}
+                {trade.normal_pullback_max_pct}%
               </li>
               <li>
                 Expected time to move: {trade.expected_time_to_move_min_days} to{' '}

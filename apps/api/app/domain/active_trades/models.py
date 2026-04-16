@@ -8,7 +8,6 @@ class GuidanceStatus(str, Enum):
     HOLD = "HOLD"
     EXIT = "EXIT"
     EXPIRED = "EXPIRED"
-    NORMAL = "NORMAL"
 
 
 class ActiveTrade(BaseModel):
@@ -20,10 +19,11 @@ class ActiveTrade(BaseModel):
     pnl_percent: float
     distance_to_stop_percent: float
     distance_to_target_percent: float
-    expected_drawdown_min_percent: float
-    expected_drawdown_max_percent: float
+    normal_pullback_min_pct: float
+    normal_pullback_max_pct: float
     expected_time_to_move_min_days: int = Field(..., ge=1)
     expected_time_to_move_max_days: int = Field(..., ge=1)
     elapsed_days: int = Field(..., ge=0)
+    thesis_intact: bool
     guidance_status: GuidanceStatus
     guidance_message: str

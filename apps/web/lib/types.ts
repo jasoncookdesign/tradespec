@@ -77,7 +77,7 @@ export interface PositionSizingResult {
   warnings: string[];
 }
 
-export type GuidanceStatus = 'HOLD' | 'EXIT' | 'EXPIRED' | 'NORMAL';
+export type GuidanceStatus = 'HOLD' | 'EXIT' | 'EXPIRED';
 
 export interface ActiveTrade {
   id: string;
@@ -88,11 +88,12 @@ export interface ActiveTrade {
   pnl_percent: number;
   distance_to_stop_percent: number;
   distance_to_target_percent: number;
-  expected_drawdown_min_percent: number;
-  expected_drawdown_max_percent: number;
+  normal_pullback_min_pct: number;
+  normal_pullback_max_pct: number;
   expected_time_to_move_min_days: number;
   expected_time_to_move_max_days: number;
   elapsed_days: number;
+  thesis_intact: boolean;
   guidance_status: GuidanceStatus;
   guidance_message: string;
 }
