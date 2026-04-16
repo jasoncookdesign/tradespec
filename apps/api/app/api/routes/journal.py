@@ -2,10 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.core.dependencies import get_ai_service, get_journal_service
+from app.core.dependencies import (
+    get_ai_service,
+    get_journal_service,
+    get_journal_summary_service,
+)
 from app.domain.ai_services.service import AIService
-from app.domain.journal.models import JournalEntry, JournalEntryCreate
-from app.domain.journal.service import JournalService
+from app.domain.journal.models import JournalEntry, JournalEntryCreate, JournalPatternSummary
+from app.domain.journal.service import JournalPatternSummaryService, JournalService
 
 router = APIRouter(tags=["journal"])
 
@@ -15,6 +19,16 @@ def list_journal_entries_route(
     service: Annotated[JournalService, Depends(get_journal_service)],
 ) -> list[JournalEntry]:
     return service.list_entries()
+
+
+@router.get('/journal-summary', response_model=JournalPatternSummary)
+def journal_summary_route(
+    summary_service: Annotated[
+        JournalPatternSummaryService,
+        Depends(get_journal_summary_service),
+    ],
+) -> JournalPatternSummary:
+    return summary_service.summarize_patterns()
 
 
 @router.post("/journal-entry", response_model=JournalEntry)

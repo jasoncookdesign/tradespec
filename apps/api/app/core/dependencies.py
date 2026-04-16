@@ -4,9 +4,10 @@ from pathlib import Path
 from app.core.config import Settings, get_settings
 from app.domain.ai_services.service import AIService, StubAIService
 from app.domain.journal.repository import SQLiteJournalRepository
-from app.domain.journal.service import JournalService
+from app.domain.journal.service import JournalPatternSummaryService, JournalService
 from app.domain.market_data.service import MarketDataService, NormalizedMarketDataService
 from app.domain.market_data.yahoo_adapter import YahooFinanceMarketDataProvider
+from app.domain.trade_specs.repository import SQLiteTradeSpecRepository
 
 
 def get_app_settings() -> Settings:
@@ -56,10 +57,27 @@ def _build_journal_repository(sqlite_url: str) -> SQLiteJournalRepository:
     return SQLiteJournalRepository(_sqlite_path_from_url(sqlite_url))
 
 
+@lru_cache
+def _build_trade_spec_repository(sqlite_url: str) -> SQLiteTradeSpecRepository:
+    return SQLiteTradeSpecRepository(_sqlite_path_from_url(sqlite_url))
+
+
 def get_journal_repository() -> SQLiteJournalRepository:
     settings = get_settings()
     return _build_journal_repository(settings.sqlite_url)
 
 
+def get_trade_spec_repository() -> SQLiteTradeSpecRepository:
+    settings = get_settings()
+    return _build_trade_spec_repository(settings.sqlite_url)
+
+
 def get_journal_service() -> JournalService:
     return JournalService(get_journal_repository())
+
+
+def get_journal_summary_service() -> JournalPatternSummaryService:
+    return JournalPatternSummaryService(
+        get_journal_repository(),
+        get_trade_spec_repository(),
+    )

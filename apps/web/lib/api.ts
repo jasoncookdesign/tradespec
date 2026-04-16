@@ -2,6 +2,7 @@ import {
   ActiveTrade,
   JournalEntry,
   JournalEntryCreate,
+  JournalPatternSummary,
   PositionSizingRequest,
   PositionSizingResult,
   TickerEvaluation,
@@ -57,6 +58,10 @@ export function getActiveTrades(): Promise<ActiveTrade[]> {
 
 export function getJournalEntries(): Promise<JournalEntry[]> {
   return apiRequest<JournalEntry[]>('/journal-entries');
+}
+
+export function getJournalSummary(): Promise<JournalPatternSummary> {
+  return apiRequest<JournalPatternSummary>('/journal-summary');
 }
 
 export function createJournalEntry(payload: JournalEntryCreate): Promise<JournalEntry> {

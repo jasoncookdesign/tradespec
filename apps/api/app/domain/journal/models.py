@@ -16,3 +16,17 @@ class JournalEntry(JournalEntryCreate):
     id: str = Field(default_factory=lambda: f"journal-{str(uuid4())[:8]}")
     ai_observation: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class JournalPatternFinding(BaseModel):
+    key: str
+    title: str
+    count: int = Field(..., ge=1)
+    summary: str
+
+
+class JournalPatternSummary(BaseModel):
+    insufficient_data: bool
+    sample_size: int = Field(..., ge=0)
+    message: str
+    findings: list[JournalPatternFinding]

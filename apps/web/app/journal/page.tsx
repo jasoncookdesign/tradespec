@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import { createJournalEntry, getJournalEntries } from '../../lib/api';
-import { JournalEntry } from '../../lib/types';
+import { createJournalEntry, getJournalEntries, getJournalSummary } from '../../lib/api';
+import { JournalEntry, JournalPatternSummary } from '../../lib/types';
 
 export default function JournalPage() {
   const [tradeSpecId, setTradeSpecId] = useState('trade-msft-001');
@@ -11,6 +11,7 @@ export default function JournalPage() {
   const [outcome, setOutcome] = useState('Closed into planned strength.');
   const [lesson, setLesson] = useState('Following the plan reduced emotional decision-making.');
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [summary, setSummary] = useState<JournalPatternSummary | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -18,6 +19,12 @@ export default function JournalPage() {
       .then(setEntries)
       .catch(() => {
         setError('Start the API on localhost:8000 to load journal entries.');
+      });
+
+    getJournalSummary()
+      .then(setSummary)
+      .catch(() => {
+        setError('Start the API on localhost:8000 to load journal insights.');
       });
   }, []);
 
@@ -38,6 +45,8 @@ export default function JournalPage() {
         lesson_summary: lesson,
       });
       setEntries((current) => [result, ...current]);
+      const refreshedSummary = await getJournalSummary();
+      setSummary(refreshedSummary);
     } catch {
       setError('Start the API on localhost:8000 to create a journal preview.');
     }
@@ -86,6 +95,23 @@ export default function JournalPage() {
         </div>
 
         {error ? <p className="notice">{error}</p> : null}
+      </div>
+
+      <div className="card stack-md">
+        <h3>Pattern summary</h3>
+        {summary ? <p>{summary.message}</p> : null}
+        {summary?.insufficient_data ? (
+          <p>Keep journaling a few more completed trades to unlock useful patterns.</p>
+        ) : null}
+        {summary && summary.findings.length > 0 ? (
+          <ul className="vocabulary">
+            {summary.findings.map((finding) => (
+              <li key={finding.key}>
+                <strong>{finding.title}:</strong> {finding.summary}
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
 
       <div className="card stack-md">

@@ -120,3 +120,17 @@ export interface JournalEntry extends JournalEntryCreate {
   ai_observation: string;
   created_at: string;
 }
+
+export interface JournalPatternFinding {
+  key: string;
+  title: string;
+  count: number;
+  summary: string;
+}
+
+export interface JournalPatternSummary {
+  insufficient_data: boolean;
+  sample_size: number;
+  message: string;
+  findings: JournalPatternFinding[];
+}
