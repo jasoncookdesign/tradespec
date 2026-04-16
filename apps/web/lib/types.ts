@@ -53,6 +53,30 @@ export interface TradeValidationResult {
   warnings: string[];
 }
 
+export interface PositionSizingRequest {
+  trade: TradeSpecInput;
+  account_size_dollars: number;
+  risk_percent_per_trade: number;
+  intended_entry_price: number;
+}
+
+export type PositionSizingStatus = 'READY' | 'BLOCKED' | 'NOT_FEASIBLE';
+
+export interface PositionSizingResult {
+  approved_for_sizing: boolean;
+  status: PositionSizingStatus;
+  account_size_dollars: number;
+  risk_percent_per_trade: number;
+  entry_price_used: number;
+  risk_dollars: number;
+  risk_per_share: number;
+  suggested_shares: number;
+  capital_required: number;
+  capital_utilization_percent: number;
+  notes: string[];
+  warnings: string[];
+}
+
 export type GuidanceStatus = 'HOLD' | 'EXIT' | 'EXPIRED' | 'NORMAL';
 
 export interface ActiveTrade {

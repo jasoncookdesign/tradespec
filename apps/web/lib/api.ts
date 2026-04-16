@@ -2,6 +2,8 @@ import {
   ActiveTrade,
   JournalEntry,
   JournalEntryCreate,
+  PositionSizingRequest,
+  PositionSizingResult,
   TickerEvaluation,
   TradeSpecInput,
   TradeValidationResult,
@@ -35,6 +37,15 @@ export function evaluateTicker(ticker: string): Promise<TickerEvaluation> {
 
 export function validateTrade(payload: TradeSpecInput): Promise<TradeValidationResult> {
   return apiRequest<TradeValidationResult>('/validate-trade', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function calculatePositionSize(
+  payload: PositionSizingRequest,
+): Promise<PositionSizingResult> {
+  return apiRequest<PositionSizingResult>('/position-size', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

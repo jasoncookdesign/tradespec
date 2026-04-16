@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 
-import { evaluateTicker, validateTrade } from '../../lib/api';
-import { TickerEvaluation, TradeValidationResult } from '../../lib/types';
+import { calculatePositionSize, evaluateTicker, validateTrade } from '../../lib/api';
+import { PositionSizingResult, TickerEvaluation, TradeValidationResult } from '../../lib/types';
 
 export default function PreTradePage() {
   const [ticker, setTicker] = useState('MSFT');
   const [evaluation, setEvaluation] = useState<TickerEvaluation | null>(null);
   const [validation, setValidation] = useState<TradeValidationResult | null>(null);
+  const [positionSizing, setPositionSizing] = useState<PositionSizingResult | null>(null);
   const [error, setError] = useState('');
   const [tradeForm, setTradeForm] = useState({
     setup_type: 'trend_pullback',
@@ -18,6 +19,11 @@ export default function PreTradePage() {
     target_price: '114',
     time_horizon_days: '10',
     thesis: 'Trend pullback into support with defined risk.',
+  });
+  const [sizingForm, setSizingForm] = useState({
+    account_size_dollars: '10000',
+    risk_percent_per_trade: '1.0',
+    intended_entry_price: '101',
   });
 
   async function handleEvaluateTicker() {
@@ -38,6 +44,7 @@ export default function PreTradePage() {
 
   async function handleValidateTrade() {
     setError('');
+    setPositionSizing(null);
 
     try {
       const result = await validateTrade({
@@ -54,6 +61,48 @@ export default function PreTradePage() {
       setValidation(result);
     } catch {
       setError('Trade validation preview is unavailable until the API is running.');
+    }
+  }
+
+  async function handleCalculatePositionSize() {
+    setError('');
+
+    const accountSize = Number(sizingForm.account_size_dollars);
+    const riskPercent = Number(sizingForm.risk_percent_per_trade);
+    const intendedEntryPrice = Number(sizingForm.intended_entry_price);
+
+    if (
+      Number.isNaN(accountSize) ||
+      Number.isNaN(riskPercent) ||
+      Number.isNaN(intendedEntryPrice) ||
+      accountSize <= 0 ||
+      riskPercent <= 0 ||
+      intendedEntryPrice <= 0
+    ) {
+      setError('Enter a valid account size, risk percent, and intended entry price.');
+      return;
+    }
+
+    try {
+      const result = await calculatePositionSize({
+        trade: {
+          ticker: ticker.trim().toUpperCase() || 'MSFT',
+          setup_type: tradeForm.setup_type as 'trend_pullback',
+          entry_zone_min: Number(tradeForm.entry_zone_min),
+          entry_zone_max: Number(tradeForm.entry_zone_max),
+          stop_loss: Number(tradeForm.stop_loss),
+          target_price: Number(tradeForm.target_price),
+          time_horizon_days: Number(tradeForm.time_horizon_days),
+          thesis: tradeForm.thesis,
+          ticker_status: evaluation?.status ?? 'WAIT',
+        },
+        account_size_dollars: accountSize,
+        risk_percent_per_trade: riskPercent,
+        intended_entry_price: intendedEntryPrice,
+      });
+      setPositionSizing(result);
+    } catch {
+      setError('Position sizing is unavailable until the API is running.');
     }
   }
 
@@ -233,6 +282,123 @@ export default function PreTradePage() {
               <strong>Warnings</strong>
               <ul className="vocabulary">
                 {validation.warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="card stack-md">
+        <h3>Position sizing</h3>
+        <p>
+          Size the trade using account risk, an explicit intended entry price, and stop
+          loss. Only approved trades can proceed to sizing.
+        </p>
+        <div className="grid twoColGrid">
+          <label className="field">
+            <span>Account size dollars</span>
+            <input
+              type="number"
+              min="0"
+              step="100"
+              value={sizingForm.account_size_dollars}
+              onChange={(event) =>
+                setSizingForm((current) => ({
+                  ...current,
+                  account_size_dollars: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Risk percent per trade</span>
+            <input
+              type="number"
+              min="0"
+              step="0.25"
+              value={sizingForm.risk_percent_per_trade}
+              onChange={(event) =>
+                setSizingForm((current) => ({
+                  ...current,
+                  risk_percent_per_trade: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Intended entry price</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={sizingForm.intended_entry_price}
+              onChange={(event) =>
+                setSizingForm((current) => ({
+                  ...current,
+                  intended_entry_price: event.target.value,
+                }))
+              }
+            />
+          </label>
+        </div>
+        <div className="buttonRow">
+          <button
+            type="button"
+            onClick={handleCalculatePositionSize}
+            disabled={!validation?.approved}
+          >
+            Calculate position size
+          </button>
+        </div>
+      </div>
+
+      {positionSizing ? (
+        <div className="card stack-md">
+          <h3>Position sizing result</h3>
+          <p>
+            <strong>Sizing status:</strong> {positionSizing.status}
+          </p>
+          <p>
+            <strong>Ready to size:</strong>{' '}
+            {positionSizing.approved_for_sizing ? 'Yes' : 'Not yet'}
+          </p>
+          <div className="grid twoColGrid">
+            <p>
+              <strong>Risk dollars:</strong> ${positionSizing.risk_dollars}
+            </p>
+            <p>
+              <strong>Risk per share:</strong> ${positionSizing.risk_per_share}
+            </p>
+            <p>
+              <strong>Suggested shares:</strong> {positionSizing.suggested_shares}
+            </p>
+            <p>
+              <strong>Capital required:</strong> ${positionSizing.capital_required}
+            </p>
+            <p>
+              <strong>Capital utilization:</strong> {positionSizing.capital_utilization_percent}%
+            </p>
+            <p>
+              <strong>Entry used:</strong> ${positionSizing.entry_price_used}
+            </p>
+          </div>
+          {positionSizing.notes.length > 0 ? (
+            <div>
+              <strong>Notes</strong>
+              <ul className="vocabulary">
+                {positionSizing.notes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {positionSizing.warnings.length > 0 ? (
+            <div>
+              <strong>Warnings</strong>
+              <ul className="vocabulary">
+                {positionSizing.warnings.map((warning) => (
                   <li key={warning}>{warning}</li>
                 ))}
               </ul>
