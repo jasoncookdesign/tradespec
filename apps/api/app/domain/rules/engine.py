@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from app.domain.evaluations.models import AssetType, PriceZone, TickerEvaluation
+from app.domain.evaluations.models import AssetType, PriceZone, TickerEvaluation, WaitPlan
 from app.domain.market_data.models import MarketSnapshot
 from app.domain.rules.config import DEFAULT_PRETRADE_RULE_CONFIG, PreTradeRuleConfig
 from app.domain.rules.models import EvaluationStatus
@@ -136,6 +136,42 @@ def evaluate_market_snapshot(
         f"{volatility_label} for a swing setup."
     )
 
+    wait_plan = None
+    if status == EvaluationStatus.WAIT:
+        # The chase boundary is the top of the preferred entry zone because buying above
+        # that level usually worsens the stop distance and weakens risk/reward.
+        # The re-check trigger is intentionally simplified to a daily-close review for
+        # the MVP; more granular triggers could be added later if needed.
+        if is_above_entry_zone:
+            becomes_valid_when = (
+                'WAIT becomes VALID only if price pulls back into the defined entry zone '
+                f'of {preferred_entry_zone.min_price} to {preferred_entry_zone.max_price}.'
+            )
+            recheck_trigger = 'Re-check after the next disciplined daily close near support.'
+        elif is_below_support_zone:
+            becomes_valid_when = (
+                'WAIT becomes VALID only if price reclaims support and moves back into '
+                f'the entry zone above {preferred_support_zone.min_price}.'
+            )
+            recheck_trigger = 'Re-check after a daily close back inside the preferred range.'
+        else:
+            becomes_valid_when = (
+                'WAIT becomes VALID only when price is sitting inside the defined entry '
+                'zone with support intact.'
+            )
+            recheck_trigger = 'Re-check on the next daily close review.'
+
+        wait_plan = WaitPlan(
+            preferred_entry_zone=preferred_entry_zone,
+            becomes_valid_when=becomes_valid_when,
+            recheck_trigger=recheck_trigger,
+            do_not_chase_above=preferred_entry_zone.max_price,
+            notes=[
+                'This setup is valid only within the defined entry zone.',
+                'Do not enter outside this range.',
+            ],
+        )
+
     return TickerEvaluation(
         ticker=snapshot.ticker,
         asset_type=asset_type,
@@ -147,5 +183,6 @@ def evaluate_market_snapshot(
         reasons=reasons,
         suggested_entry_zone=preferred_entry_zone,
         suggested_support_zone=preferred_support_zone,
+        wait_plan=wait_plan,
         generated_at=datetime.now(UTC),
     )

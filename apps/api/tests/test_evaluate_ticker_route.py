@@ -51,3 +51,19 @@ def test_evaluate_ticker_route_uses_market_data_and_rules() -> None:
     assert body['ticker'] == 'MSFT'
     assert body['status'] in {'VALID', 'WAIT', 'INVALID'}
     assert isinstance(body['reasons'], list)
+
+
+def test_wait_state_includes_structured_wait_plan() -> None:
+    app.dependency_overrides[get_market_data_service] = lambda: StubEvaluationMarketDataService()
+    try:
+        response = client.post('/api/evaluate-ticker', json={'ticker': 'MSFT'})
+    finally:
+        app.dependency_overrides.clear()
+
+    body = response.json()
+    if body['status'] == 'WAIT':
+        assert body['wait_plan'] is not None
+        assert body['wait_plan']['preferred_entry_zone'] == body['suggested_entry_zone']
+        assert body['wait_plan']['do_not_chase_above'] == body['suggested_entry_zone']['max_price']
+    else:
+        assert body['wait_plan'] is None

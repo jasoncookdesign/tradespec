@@ -12,6 +12,14 @@ export interface PriceZone {
   max_price: number;
 }
 
+export interface WaitPlan {
+  preferred_entry_zone: PriceZone;
+  becomes_valid_when: string;
+  recheck_trigger: string;
+  do_not_chase_above: number;
+  notes: string[];
+}
+
 export interface TickerEvaluation {
   ticker: string;
   asset_type: AssetType;
@@ -23,6 +31,7 @@ export interface TickerEvaluation {
   reasons: string[];
   suggested_entry_zone: PriceZone;
   suggested_support_zone: PriceZone;
+  wait_plan: WaitPlan | null;
   generated_at: string;
 }
 

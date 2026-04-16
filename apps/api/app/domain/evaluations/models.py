@@ -33,6 +33,14 @@ class EvaluateTickerRequest(BaseModel):
         return value.strip().upper()
 
 
+class WaitPlan(BaseModel):
+    preferred_entry_zone: PriceZone
+    becomes_valid_when: str
+    recheck_trigger: str
+    do_not_chase_above: float = Field(..., gt=0)
+    notes: list[str]
+
+
 class TickerEvaluation(BaseModel):
     ticker: str
     asset_type: AssetType
@@ -44,4 +52,5 @@ class TickerEvaluation(BaseModel):
     reasons: list[str]
     suggested_entry_zone: PriceZone
     suggested_support_zone: PriceZone
+    wait_plan: WaitPlan | None = None
     generated_at: datetime

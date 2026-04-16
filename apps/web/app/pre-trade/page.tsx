@@ -157,6 +157,28 @@ export default function PreTradePage() {
               <li key={reason}>{reason}</li>
             ))}
           </ul>
+
+          {evaluation.status === 'WAIT' && evaluation.wait_plan ? (
+            <div>
+              <strong>Wait plan</strong>
+              <ul className="vocabulary">
+                <li>
+                  Preferred entry zone: {evaluation.wait_plan.preferred_entry_zone.min_price} -{' '}
+                  {evaluation.wait_plan.preferred_entry_zone.max_price}
+                </li>
+                <li>
+                  Valid only when: {evaluation.wait_plan.becomes_valid_when}
+                </li>
+                <li>Re-check trigger: {evaluation.wait_plan.recheck_trigger}</li>
+                <li>
+                  Do not chase above: {evaluation.wait_plan.do_not_chase_above}
+                </li>
+                {evaluation.wait_plan.notes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
